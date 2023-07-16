@@ -569,15 +569,15 @@ void *s21_trim(const char *src, const char *trim_chars) {
 
 #include "s21_string.h"
 
-int s21_sscanf(const char *str, const char *formatStr, ...) {
+int s21_sscanf(const char *str, const char *format, ...) {
   int isEndOfFile = checkEOF(str), res = 0;
 
   if (!isEndOfFile) {
     va_list args;
-    va_start(args, formatStr);
+    va_start(args, format);
     int patterns_len = 0;
 
-    char *formStr = (char *)formatStr;
+    char *formStr = (char *)format;
     char *src = (char *)str;
 
     StringPatterns patterns[BUFF_SIZE];
@@ -619,33 +619,33 @@ int checkEOF(const char *src) {
 }
 
 /// @brief Считываем все имеющиеся спецификаторы, take values of width,length
-/// @param formatStr Считанная строка на входе
+/// @param format Считанная строка на входе
 /// @param args
 /// @return Набор из ширины, спецификаторов, длины
-StringPatterns parsePatterns(char **formatStr, va_list *args) {
+StringPatterns parsePatterns(char **format, va_list *args) {
   StringPatterns pattern = {.addr = MY_NULL,
                             .TypeLength = LENGTH_NONE,
                             .spec = 0,
                             .width = WIDTH_NONE,
                             .widthNumber = 0};
 
-  if (isSpace(**formatStr)) {
+  if (isSpace(**format)) {
     pattern.spec = 'z';
-    skipSpacesInStr(formatStr);
+    skipSpacesInStr(format);
   }
 
-  if (**formatStr == '%' && !pattern.spec) {
-    (*formatStr)++;
+  if (**format == '%' && !pattern.spec) {
+    (*format)++;
 
-    if (**formatStr == '%') {
+    if (**format == '%') {
       s21_memset(pattern.buff, '\0', BUFF_SIZE - 1);
       pattern.buff[0] = '%';
-      (*formatStr)++;
+      (*format)++;
       pattern.spec = 'b';
     } else {
-      fstrParseWidth(formatStr, &pattern);
-      fstrParseLength(formatStr, &pattern);
-      fstrParseSpecifier(formatStr, &pattern);
+      fstrParseWidth(format, &pattern);
+      fstrParseLength(format, &pattern);
+      fstrParseSpecifier(format, &pattern);
 
       if (pattern.width != WIDTH_NOT_ASSIGNED)
         pattern.addr = va_arg(*args, void *);
@@ -654,12 +654,12 @@ StringPatterns parsePatterns(char **formatStr, va_list *args) {
     if (pattern.spec == 'p') pattern.TypeLength = LENGTH_NONE;
   }
 
-  if (isAlphabet(**formatStr) && !pattern.spec) {
+  if (isAlphabet(**format) && !pattern.spec) {
     s21_memset(pattern.buff, '\0', BUFF_SIZE - 1);
     int i = 0;
-    while (**formatStr && !isSpace(**formatStr) && **formatStr != '%') {
-      pattern.buff[i++] = **formatStr;
-      (*formatStr)++;
+    while (**format && !isSpace(**format) && **format != '%') {
+      pattern.buff[i++] = **format;
+      (*format)++;
     }
     pattern.spec = 'b';
   }
@@ -687,14 +687,14 @@ void skipCharsInBuffer(char **src, int *failFlag, StringPatterns *pattern) {
 }
 
 /// @brief Парсим ширину
-/// @param formatStr Считанная строка на входе
+/// @param format Считанная строка на входе
 /// @param pattern
-void fstrParseWidth(char **formatStr, StringPatterns *pattern) {
-  if (**formatStr == '*') {
-    (*formatStr)++;
+void fstrParseWidth(char **format, StringPatterns *pattern) {
+  if (**format == '*') {
+    (*format)++;
     pattern->width = WIDTH_NOT_ASSIGNED;
   } else {
-    int gottenNumber = parseNumberFromFstr(formatStr);
+    int gottenNumber = parseNumberFromFstr(format);
 
     if (gottenNumber) {
       pattern->width = WIDTH_NUMBER;
@@ -704,16 +704,16 @@ void fstrParseWidth(char **formatStr, StringPatterns *pattern) {
 }
 
 /// @brief Получаем минимальное количество печатаемых символов
-/// @param formatStr Считанная строка на входе
+/// @param format Считанная строка на входе
 /// @return кол-во печатаемых символов
-int parseNumberFromFstr(char **formatStr) {
+int parseNumberFromFstr(char **format) {
   char tempal[BUFF_SIZE] = {'\0'};
 
   int result = 0, i = 0;
 
-  while (**formatStr >= '0' && **formatStr <= '9') {
-    tempal[i] = **formatStr;
-    (*formatStr)++;
+  while (**format >= '0' && **format <= '9') {
+    tempal[i] = **format;
+    (*format)++;
     i++;
   }
 
@@ -723,35 +723,35 @@ int parseNumberFromFstr(char **formatStr) {
 }
 
 /// @brief Узнаем нужную длину значения
-/// @param formatStr Считанная строка на входе
+/// @param format Считанная строка на входе
 /// @param pattern
-void fstrParseLength(char **formatStr, StringPatterns *pattern) {
-  switch (**formatStr) {
+void fstrParseLength(char **format, StringPatterns *pattern) {
+  switch (**format) {
     case 'L':
       pattern->TypeLength = LENGTH_LONG_DOUBLE;
-      (*formatStr)++;
+      (*format)++;
       break;
     case 'h':
       pattern->TypeLength = LENGTH_SHORT;
-      (*formatStr)++;
+      (*format)++;
       break;
     case 'l':
       pattern->TypeLength = LENGTH_LONG;
-      (*formatStr)++;
-      if (**formatStr == 'l') {
+      (*format)++;
+      if (**format == 'l') {
         pattern->TypeLength = LENGTH_LONG_LONG;
-        (*formatStr)++;
+        (*format)++;
       }
       break;
   }
 }
 
 /// @brief Считываем спецификатор
-/// @param formatStr
+/// @param format
 /// @param pattern
-void fstrParseSpecifier(char **formatStr, StringPatterns *pattern) {
-  pattern->spec = (**formatStr);
-  (*formatStr)++;
+void fstrParseSpecifier(char **format, StringPatterns *pattern) {
+  pattern->spec = (**format);
+  (*format)++;
 }
 
 /// @brief Определяем используемые паттерны и производим запись
