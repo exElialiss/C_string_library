@@ -434,14 +434,16 @@ char *s21_strrchr(const char *str, int c) {
 }
 
 my_size_t s21_strcspn(const char *str1, const char *str2) {
-  my_size_t i;
-  const char *s;
-  for (i = 0; *str1; str1++, i++) {
-    for (s = str2; *s && *s != *str1; s++)
-      ;
-    if (!*s) break;
+  my_size_t str = s21_strlen(str1);
+
+  for (my_size_t i = 0; i < s21_strlen(str1); i++) {
+    for (my_size_t j = 0; j < s21_strlen(str2); j++) {
+      if ((str1[i] == str2[j]) && (str > i)) {
+        str = i;
+      }
+    }
   }
-  return i;
+  return str;
 }
 
 char *s21_strstr(const char *haystack, const char *needle) {
@@ -670,7 +672,7 @@ StringPatterns parsePatterns(char **format, va_list *args) {
 /// @param failFlag
 /// @param pattern
 void skipCharsInBuffer(char **src, int *failFlag, StringPatterns *pattern) {
-  int checkValud = s21_strcspn(*src, pattern->buff);
+  int checkValud = mystrspn(*src, pattern->buff);
   int len = s21_strlen(pattern->buff);
 
   if (len == 1 && **src == pattern->buff[0]) {
@@ -855,8 +857,8 @@ void writeIntToMemory(char **str, int *failFlag, int *res,
 
   *failFlag = 1;
 
-  if (s21_strcspn(*str, "+-0123456789")) {
-    int signBeforeNumber = s21_strcspn(*str, "+-");
+  if (mystrspn(*str, "+-0123456789")) {
+    int signBeforeNumber = mystrspn(*str, "+-");
 
     if (!(signBeforeNumber > 1 ||
           (signBeforeNumber &&
@@ -899,13 +901,13 @@ void writeUnspecIntToMemory(char **str, int *failFlag, int *res,
 
   skipSpacesInStr(str);
 
-  if (s21_strcspn(*str, "0x") == 2) {
+  if (mystrspn(*str, "0x") == 2) {
     *failFlag = 0;
     writeHexOrOctToMemory(str, failFlag, res, pattern, 16);
-  } else if (s21_strcspn(*str, "0") == 1) {
+  } else if (mystrspn(*str, "0") == 1) {
     *failFlag = 0;
     writeHexOrOctToMemory(str, failFlag, res, pattern, 8);
-  } else if (s21_strcspn(*str, "+-0123456789")) {
+  } else if (mystrspn(*str, "+-0123456789")) {
     *failFlag = 0;
     writeIntToMemory(str, failFlag, res, pattern);
   }
@@ -919,7 +921,7 @@ void writeUnspecIntToMemory(char **str, int *failFlag, int *res,
 /// @param startIndex
 void writeCharsToBuff(char **str, const char *chars, char *buff, int16_t width,
                       int startIndex) {
-  while (**str && s21_strcspn(*str, chars) != 0) {
+  while (**str && mystrspn(*str, chars) != 0) {
     if ((width && startIndex >= width) || (isSpace(**str))) {
       break;
     }
@@ -941,12 +943,12 @@ void writeFloatToMemory(char **str, int *res, StringPatterns *pattern) {
   int checkValud = 0;
 
   if (pattern->spec == 'f')
-    checkValud = s21_strcspn(*str, "0123456789+-");
+    checkValud = mystrspn(*str, "0123456789+-");
   else
-    checkValud = s21_strcspn(*str, "0123456789eE+-NnaAifIF");
+    checkValud = mystrspn(*str, "0123456789eE+-NnaAifIF");
 
   if (checkValud) {
-    int signBeforeNumber = s21_strcspn(*str, "+-");
+    int signBeforeNumber = mystrspn(*str, "+-");
     if (!(signBeforeNumber > 1 ||
           (signBeforeNumber &&
            (pattern->widthNumber <= 1 && pattern->width)))) {
@@ -992,8 +994,8 @@ void writeUnsignedToMemory(char **str, int *failFlag, int *res,
   skipSpacesInStr(str);
   char buff[BUFF_SIZE] = {'\0'};
 
-  if (s21_strcspn(*str, "+-0123456789")) {
-    int signBeforeNumber = s21_strcspn(*str, "+-");
+  if (mystrspn(*str, "+-0123456789")) {
+    int signBeforeNumber = mystrspn(*str, "+-");
     if (!((signBeforeNumber > 1 ||
            (signBeforeNumber &&
             (pattern->widthNumber <= 1 && pattern->width))))) {
@@ -1041,8 +1043,8 @@ void writeHexOrOctToMemory(char **str, int *failFlag, int *res,
   if (base == 16 && **str == '0' && (*(*str + 1) == 'x' || *(*str + 1) == 'X'))
     pattern->widthNumber -= 2;
 
-  if (s21_strcspn(*str, "abcdefABCDEF0123456789") > 0 ||
-      s21_strcspn(*str, "abcdefABCDEFxX0123456789") >= 2) {
+  if (mystrspn(*str, "abcdefABCDEF0123456789") > 0 ||
+      mystrspn(*str, "abcdefABCDEFxX0123456789") >= 2) {
     unsigned long long int result =
         s21_strntoul(*str, &ptr, base,
                      pattern->width ? pattern->widthNumber : s21_strlen(*str));
@@ -1060,7 +1062,7 @@ void writeHexOrOctToMemory(char **str, int *failFlag, int *res,
     *failFlag = 1;
   }
   unsigned int max =
-      (unsigned int)s21_strcspn(*str, "0123456789abcdefABCDEFxX");
+      (unsigned int)mystrspn(*str, "0123456789abcdefABCDEFxX");
 
   if (pattern->width != WIDTH_NUMBER) {
     *str += max;
@@ -1302,7 +1304,7 @@ static int ncludesExponent(const char *buffer) {
   int res = 0;
 
   for (char *p = (char *)buffer; *p; p++) {
-    if (s21_strcspn(p, "eE")) {
+    if (mystrspn(p, "eE")) {
       res = 1;
       break;
     }
@@ -1325,7 +1327,7 @@ static long double s21_atof(const char *buffer) {
 
   if (*p == '.') {
     p++;
-    int trailing_zeros = s21_strcspn(p, "0");
+    int trailing_zeros = mystrspn(p, "0");
     frac = s21_atoi(p);
     int tmp = (int)frac;
     while (tmp) {
@@ -1377,6 +1379,17 @@ unsigned long long int s21_strntoul(const char *str, char **endptr, int base,
     if (ex) *endptr = (char *)str;
   }
   return result * sign;
+}
+
+my_size_t mystrspn(const char *str1, const char *str2) {
+  my_size_t i;
+  const char *s;
+  for (i = 0; *str1; str1++, i++) {
+    for (s = str2; *s && *s != *str1; s++)
+      ;
+    if (!*s) break;
+  }
+  return i;
 }
 
 int s21_sprintf(char *str, const char *format, ...) {

@@ -83,6 +83,7 @@ int s21_sscanf(const char *str, const char *format, ...);
 long double s21_strtold(const char *buffer);
 int s21_atoi(const char *str);
 char *s21_strcpy(char *dest, const char *src);
+my_size_t mystrspn(const char *str1, const char *str2);
 
 int checkEOF(const char *src);
 void writeCharsToBuff(char **str, const char *chars, char *buff, int16_t width,
