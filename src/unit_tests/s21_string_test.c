@@ -1476,8 +1476,6 @@ Suite *suite_atoi(void) {
   return s;
 }
 
-#include "s21_string_test.h"
-
 START_TEST(EOF1) {
   char fstr[] = "%d";
   char str[] = "        ";
@@ -3815,8 +3813,6 @@ Suite *suite_sscanf(void) {
 
   return s;
 }
-
-#include "s21_string_test.h"
 
 START_TEST(sprintf_1_c) {
   char str1[100];

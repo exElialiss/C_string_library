@@ -262,8 +262,8 @@ static const char *myerror[] = {
     MY_NULL};
 #endif
 
-void *s21_insert(const char *src, const char *str, size_t start_index) {
-  char *res = NULL;
+void *s21_insert(const char *src, const char *str, my_size_t start_index) {
+  char *res = MY_NULL;
   if (src && str && s21_strlen(src) >= start_index) {
     my_size_t src_len = s21_strlen(src);
     my_size_t str_len = s21_strlen(str);
@@ -353,7 +353,7 @@ char *s21_strchr(const char *str, int c) {
 char *s21_strerror(int errnum) {
   static char res[256];
   if (errnum < 0 || errnum > 134 || myerror[errnum] == MY_NULL) {
-    sprintf(res, "Unknown error %d", errnum);
+    s21_sprintf(res, "Unknown error %d", errnum);
 
   } else {
     s21_strncpy(res, myerror[errnum], BUFF_SIZE - 1);
@@ -549,7 +549,7 @@ void *s21_to_upper(const char *str) {
 }
 
 void *s21_trim(const char *src, const char *trim_chars) {
-  char *res = NULL;
+  char *res = MY_NULL;
   if (src && trim_chars) {
     const char *start = src;
     const char *end = src + s21_strlen(src) - 1;
@@ -557,7 +557,7 @@ void *s21_trim(const char *src, const char *trim_chars) {
       ;
     for (; end > start && s21_strchr(trim_chars, *end); end--)
       ;
-    size_t trimmed_len = end - start + 1;
+    my_size_t trimmed_len = end - start + 1;
     res = (char *)malloc((trimmed_len + 1) * sizeof(char));
     if (res) {
       s21_strncpy(res, start, trimmed_len);
@@ -566,8 +566,6 @@ void *s21_trim(const char *src, const char *trim_chars) {
   }
   return res;
 }
-
-#include "s21_string.h"
 
 int s21_sscanf(const char *str, const char *format, ...) {
   int isEndOfFile = checkEOF(str), res = 0;
@@ -878,7 +876,7 @@ void writeIntToMemory(char **str, int *failFlag, int *res,
   if (pattern->spec == 'p' && pattern->width != WIDTH_NOT_ASSIGNED &&
       !*failFlag) {
     unsigned long long int ress =
-        s21_strntoul(buffer, NULL, 16, s21_strlen(buffer));
+        s21_strntoul(buffer, MY_NULL, 16, s21_strlen(buffer));
     *(int *)pattern->addr = (int)ress;
 
   } else {
@@ -1061,7 +1059,8 @@ void writeHexOrOctToMemory(char **str, int *failFlag, int *res,
   } else {
     *failFlag = 1;
   }
-  unsigned int max = (unsigned int)s21_strcspn(*str, "0123456789abcdefABCDEFxX");
+  unsigned int max =
+      (unsigned int)s21_strcspn(*str, "0123456789abcdefABCDEFxX");
 
   if (pattern->width != WIDTH_NUMBER) {
     *str += max;
@@ -1771,10 +1770,10 @@ char *charPointers(char **str, flags info, va_list *ptr, const char **format,
     wCharPointers(str, info, ptr, format, count);
   } else {  // обработка обычной строки
     char *x = va_arg(*ptr, char *);  // указатель на символ
-    int length = (x == NULL ? 6 : s21_strlen(x));  //  длина строки
+    int length = (x == MY_NULL ? 6 : s21_strlen(x));  //  длина строки
     if (info.prec_flag && info.precision_flag < length)
       length = info.precision_flag;  // если есть точность - применяем её
-    if (info.prec_flag && x == NULL && info.precision_flag < 6)
+    if (info.prec_flag && x == MY_NULL && info.precision_flag < 6)
       length = 0;  // обработка случая, когда указатель пустой и точность
     int size = (length > info.width_flag ? length : info.width_flag) +
                2;  // вычисляем размер результирующей строки
@@ -1791,7 +1790,7 @@ char *charPointers(char **str, flags info, va_list *ptr, const char **format,
     }
 
     // копирование строки в результирующую
-    if (x != NULL) {
+    if (x != MY_NULL) {
       for (int q = 0; q < length; q++, i++) {
         result[i] = x[q];
       }

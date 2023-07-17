@@ -4,6 +4,7 @@
 #include <check.h>
 #include <limits.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "../s21_string.h"
 
