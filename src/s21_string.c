@@ -1061,8 +1061,7 @@ void writeHexOrOctToMemory(char **str, int *failFlag, int *res,
   } else {
     *failFlag = 1;
   }
-  unsigned int max =
-      (unsigned int)mystrspn(*str, "0123456789abcdefABCDEFxX");
+  unsigned int max = (unsigned int)mystrspn(*str, "0123456789abcdefABCDEFxX");
 
   if (pattern->width != WIDTH_NUMBER) {
     *str += max;
